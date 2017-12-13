@@ -41,7 +41,7 @@ JsonConnection::~JsonConnection()
 
 void JsonConnection::setPower(bool power)
 {
-	std::cout << "Set power to " << power ? "on" : "off") << std::endl;
+	std::cout << "Set power to " << (power ? "on" : "off") << std::endl;
 
 	// create command
 	Json::Value command;

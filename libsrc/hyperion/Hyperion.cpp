@@ -923,16 +923,16 @@ void Hyperion::update()
 
 		// Write the data to the device
 		_device->write(ledColors);
-	}
 
-	// Start the timeout-timer
-	if (priorityInfo.timeoutTime_ms == -1)
-	{
-		_timer.stop();
-	}
-	else
-	{
-		int timeout_ms = std::max(0, int(priorityInfo.timeoutTime_ms - QDateTime::currentMSecsSinceEpoch()));
-		_timer.start(timeout_ms);
+		// Start the timeout-timer
+		if (priorityInfo.timeoutTime_ms == -1)
+		{
+			_timer.stop();
+		}
+		else
+		{
+			int timeout_ms = std::max(0, int(priorityInfo.timeoutTime_ms - QDateTime::currentMSecsSinceEpoch()));
+			_timer.start(timeout_ms);
+		}
 	}
 }

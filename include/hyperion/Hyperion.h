@@ -314,6 +314,6 @@ private:
 	/// The timer for handling priority channel timeouts
 	QTimer _timer;
 
-  /// Global on/off flag
-	bool _switchedOn;
+	/// Global on/off flag
+	bool _power;
 };
