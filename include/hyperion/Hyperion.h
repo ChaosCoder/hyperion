@@ -78,7 +78,7 @@ public:
 	/// Returns the number of attached leds
 	///
 	unsigned getLedCount() const;
-	
+
 	///
 	/// Returns the current priority
 	///
@@ -106,17 +106,24 @@ public:
 	/// Get the list of available effects
 	/// @return The list of available effects
 	const std::list<EffectDefinition> &getEffects() const;
-	
+
 	/// Get the list of active effects
 	/// @return The list of active effects
 	const std::list<ActiveEffectDefinition> &getActiveEffects();
-	
-	/// 
+
+	///
 	const Json::Value& getJsonConfig() { return _jsonConfig; };
-	
+
 	std::string getConfigFileName() { return _configFile; };
 
 public slots:
+  ///
+	/// Toggle hyperion on / off
+	///
+	/// @param[in] power The flag to power on (true) or off (false)
+	///
+	void setPower(bool power);
+
 	///
 	/// Writes a single color to all the leds for the given time and priority
 	///
@@ -140,49 +147,49 @@ public slots:
 	/// @return The list with transform identifiers
 	///
 	const std::vector<std::string> & getTransformIds() const;
-	
+
 	///
 	/// Returns the list with unique correction identifiers
 	/// @return The list with correction identifiers
 	///
 	const std::vector<std::string> & getCorrectionIds() const;
-	
+
 	///
 	/// Returns the list with unique correction identifiers
 	/// @return The list with correction identifiers
 	///
 	const std::vector<std::string> & getTemperatureIds() const;
-	
+
 	///
 	/// Returns the list with unique adjustment identifiers
 	/// @return The list with adjustment identifiers
 	///
 	const std::vector<std::string> & getAdjustmentIds() const;
-	
+
 	///
 	/// Returns the ColorTransform with the given identifier
 	/// @return The transform with the given identifier (or nullptr if the identifier does not exist)
 	///
 	ColorTransform * getTransform(const std::string& id);
-	
+
 	///
 	/// Returns the ColorCorrection with the given identifier
 	/// @return The correction with the given identifier (or nullptr if the identifier does not exist)
 	///
 	ColorCorrection * getCorrection(const std::string& id);
-	
+
 	///
 	/// Returns the ColorCorrection with the given identifier
 	/// @return The correction with the given identifier (or nullptr if the identifier does not exist)
 	///
 	ColorCorrection * getTemperature(const std::string& id);
-	
+
 	///
 	/// Returns the ColorAdjustment with the given identifier
 	/// @return The adjustment with the given identifier (or nullptr if the identifier does not exist)
 	///
 	ColorAdjustment * getAdjustment(const std::string& id);
-	
+
 	///
 	/// Returns  MessageForwarder Object
 	/// @return instance of message forwarder object
@@ -191,10 +198,10 @@ public slots:
 
 	/// Tell Hyperion that the transforms have changed and the leds need to be updated
 	void transformsUpdated();
-	
+
 	/// Tell Hyperion that the corrections have changed and the leds need to be updated
 	void correctionsUpdated();
-	
+
 	/// Tell Hyperion that the corrections have changed and the leds need to be updated
 	void temperaturesUpdated();
 
@@ -253,7 +260,7 @@ public:
 
 	static LedDevice * createColorSmoothing(const Json::Value & smoothingConfig, LedDevice * ledDevice);
 	static MessageForwarder * createMessageForwarder(const Json::Value & forwarderConfig);
-	
+
 signals:
 	/// Signal which is emitted when a priority channel is actively cleared
 	/// This signal will not be emitted when a priority channel time out
@@ -279,22 +286,22 @@ private:
 
 	/// The transformation from raw colors to led colors
 	MultiColorTransform * _raw2ledTransform;
-	
+
 	/// The correction from raw colors to led colors
 	MultiColorCorrection * _raw2ledCorrection;
-	
+
 	/// The temperature from raw colors to led colors
 	MultiColorCorrection * _raw2ledTemperature;
-	
+
 	/// The adjustment from raw colors to led colors
 	MultiColorAdjustment * _raw2ledAdjustment;
-	
+
 	/// The actual LedDevice
 	LedDevice * _device;
 
 	/// Effect engine
 	EffectEngine * _effectEngine;
-	
+
 	// proto and json Message forwarder
 	MessageForwarder * _messageForwarder;
 
@@ -306,4 +313,7 @@ private:
 
 	/// The timer for handling priority channel timeouts
 	QTimer _timer;
+
+  /// Global on/off flag
+	bool _switchedOn;
 };

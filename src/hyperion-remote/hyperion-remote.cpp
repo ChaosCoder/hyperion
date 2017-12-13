@@ -64,6 +64,7 @@ int main(int argc, char * argv[])
         	StringParameter    & argEffect     = parameters.add<StringParameter>   ('e', "effect"    , "Enable the effect with the given name");
 		StringParameter    & argEffectArgs = parameters.add<StringParameter>   (0x0, "effectArgs", "Arguments to use in combination with the specified effect. Should be a Json object string.");
 		SwitchParameter<>  & argServerInfo = parameters.add<SwitchParameter<> >('l', "list"      , "List server info and active effects with priority and duration");
+		BoolParameter      & argPower	     = parameters.add<BoolParameter>      ('o', "on"  , "Power hyperion on or off");
 		SwitchParameter<>  & argClear      = parameters.add<SwitchParameter<> >('x', "clear"     , "Clear data for the priority channel provided by the -p option");
 		SwitchParameter<>  & argClearAll   = parameters.add<SwitchParameter<> >(0x0, "clearall"  , "Clear data for all active priority channels");
 		StringParameter    & argId         = parameters.add<StringParameter>   ('q', "qualifier" , "Identifier(qualifier) of the transform to set");
@@ -107,7 +108,7 @@ int main(int argc, char * argv[])
 		bool colorTransform = argSaturation.isSet() || argValue.isSet() || argSaturationL.isSet() || argLuminance.isSet() || argLuminanceMin.isSet() || argThreshold.isSet() || argGamma.isSet() || argBlacklevel.isSet() || argWhitelevel.isSet();
 		bool colorAdjust = argRAdjust.isSet() || argGAdjust.isSet() || argBAdjust.isSet();
 		bool colorModding = colorTransform || colorAdjust || argCorrection.isSet() || argTemperature.isSet();
-		
+
 		// check that exactly one command was given
         int commandCount = count({argColor.isSet(), argImage.isSet(), argEffect.isSet(), argServerInfo.isSet(), argClear.isSet(), argClearAll.isSet(), colorModding});
 		if (commandCount != 1)
@@ -117,6 +118,7 @@ int main(int argc, char * argv[])
 			std::cerr << "  " << argImage.usageLine() << std::endl;
             		std::cerr << "  " << argEffect.usageLine() << std::endl;
 			std::cerr << "  " << argServerInfo.usageLine() << std::endl;
+			std::cerr << "  " << argPower.usageLine() << std::endl;
 			std::cerr << "  " << argClear.usageLine() << std::endl;
 			std::cerr << "  " << argClearAll.usageLine() << std::endl;
 			std::cerr << "or one or more of the available color modding operations:" << std::endl;
@@ -162,6 +164,10 @@ int main(int argc, char * argv[])
 			QString info = connection.getServerInfo();
 			std::cout << "Server info:\n" << info.toStdString() << std::endl;
 		}
+		else if (argPower.isSet())
+		{
+			connection.setPower(argPower.getValue());
+		}
 		else if (argClear.isSet())
 		{
 			connection.clear(argPriority.getValue());
@@ -171,7 +177,7 @@ int main(int argc, char * argv[])
 			connection.clearAll();
 		}
 		else if (colorModding)
-		{	
+		{
 			if (argCorrection.isSet())
 			{
 				std::string corrId;
@@ -184,7 +190,7 @@ int main(int argc, char * argv[])
 						argIdC.isSet()		? &corrId : nullptr,
 						argCorrection.isSet()   ? &correction  : nullptr);
 			}
-	
+
 			if (argTemperature.isSet())
 			{
 				std::string tempId;
@@ -192,12 +198,12 @@ int main(int argc, char * argv[])
 
 				if (argIdT.isSet())	tempId    = argIdT.getValue();
 				if (argTemperature.isSet())  temperature = argTemperature.getValue();
-			
+
 				connection.setTemperature(
 						argIdT.isSet()		? &tempId : nullptr,
 						argTemperature.isSet()  ? &temperature  : nullptr);
 			}
-			
+
 			if (colorAdjust)
 			{
 				std::string adjustId;
@@ -207,13 +213,13 @@ int main(int argc, char * argv[])
 				if (argRAdjust.isSet())  	redChannel  = argRAdjust.getValue();
 				if (argGAdjust.isSet())		greenChannel = argGAdjust.getValue();
 				if (argBAdjust.isSet()) 	blueChannel = argBAdjust.getValue();
-			
+
 				connection.setAdjustment(
 						argIdA.isSet()		? &adjustId    : nullptr,
 						argRAdjust.isSet()	? &redChannel  : nullptr,
 						argGAdjust.isSet()	? &greenChannel : nullptr,
-						argBAdjust.isSet()	? &blueChannel : nullptr);		
-				
+						argBAdjust.isSet()	? &blueChannel : nullptr);
+
 			}
 			if (colorTransform)
 			{
@@ -231,7 +237,7 @@ int main(int argc, char * argv[])
 				if (argGamma.isSet())      gamma      = argGamma.getValue();
 				if (argBlacklevel.isSet()) blacklevel = argBlacklevel.getValue();
 				if (argWhitelevel.isSet()) whitelevel = argWhitelevel.getValue();
-			
+
 				connection.setTransform(
 						argId.isSet()         ? &transId    : nullptr,
 						argSaturation.isSet() ? &saturation : nullptr,

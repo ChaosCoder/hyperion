@@ -37,6 +37,11 @@ public:
 	~JsonConnection();
 
 	///
+	/// Power hyperion on / off
+	///
+	void setPower(bool power);
+
+	///
 	/// Set all leds to the specified color
 	///
 	/// @param color The color
@@ -110,7 +115,7 @@ public:
 			ColorTransformValues * gamma,
 			ColorTransformValues * blacklevel,
 			ColorTransformValues * whitelevel);
-	
+
 	///
 	/// Set the color correction of the leds
 	///

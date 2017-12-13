@@ -112,27 +112,34 @@ private:
 	/// @param message the incoming message
 	///
 	void handleTransformCommand(const Json::Value & message);
-	
+
 	///
 	/// Handle an incoming JSON Correction message
 	///
 	/// @param message the incoming message
 	///
 	void handleCorrectionCommand(const Json::Value & message);
-	
+
 	///
 	/// Handle an incoming JSON Temperature message
 	///
 	/// @param message the incoming message
 	///
 	void handleTemperatureCommand(const Json::Value & message);
-	
+
 	///
 	/// Handle an incoming JSON Adjustment message
 	///
 	/// @param message the incoming message
 	///
 	void handleAdjustmentCommand(const Json::Value & message);
+
+	///
+	/// Handle an incoming JSON power message
+	///
+	/// @param message the incoming message
+	///
+	void handlePowerCommand(const Json::Value & message);
 
 	///
 	/// Handle an incoming JSON message of unknown type
@@ -158,12 +165,12 @@ private:
 	/// @param error String describing the error
 	///
 	void sendErrorReply(const std::string & error);
-	
+
 	///
 	/// Do handshake for a websocket connection
 	///
 	void doWebSocketHandshake();
-	
+
 	///
 	/// Handle incoming websocket data frame
 	///
@@ -198,7 +205,7 @@ private:
 
 	/// The buffer used for reading data from the socket
 	QByteArray _receiveBuffer;
-	
+
 	/// used for WebSocket detection and connection handling
 	bool _webSocketHandshakeDone;
 };

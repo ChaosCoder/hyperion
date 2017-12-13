@@ -39,6 +39,22 @@ JsonConnection::~JsonConnection()
 	_socket.close();
 }
 
+void JsonConnection::setPower(bool power)
+{
+	std::cout << "Set power to " << power ? "on" : "off") << std::endl;
+
+	// create command
+	Json::Value command;
+	command["command"] = "power";
+	command["power"] = power;
+
+	// send command message
+	Json::Value reply = sendMessage(command);
+
+	// parse reply message
+	parseReply(reply);
+}
+
 void JsonConnection::setColor(std::vector<QColor> colors, int priority, int duration)
 {
 	std::cout << "Set color to " << colors[0].red() << " " << colors[0].green() << " " << colors[0].blue() << (colors.size() > 1 ? " + ..." : "") << std::endl;
@@ -215,7 +231,7 @@ void JsonConnection::setTransform(std::string * transformId, double * saturation
 	{
 		transform["valueGain"] = *value;
 	}
-	
+
 	if (saturationL != nullptr)
 	{
 		transform["saturationLGain"] = *saturationL;
@@ -225,12 +241,12 @@ void JsonConnection::setTransform(std::string * transformId, double * saturation
 	{
 		transform["luminanceGain"] = *luminance;
 	}
-	
+
 	if (luminanceMin != nullptr)
 	{
 		transform["luminanceMinimum"] = *luminanceMin;
 	}
-	
+
 	if (threshold != nullptr)
 	{
 		Json::Value & v = transform["threshold"];
@@ -278,7 +294,7 @@ void JsonConnection::setCorrection(std::string * correctionId, ColorCorrectionVa
 	Json::Value command;
 	command["command"] = "correction";
 	Json::Value & correct = command["correction"];
-	
+
 	if (correctionId != nullptr)
 	{
 		correct["id"] = *correctionId;
@@ -341,7 +357,7 @@ void JsonConnection::setAdjustment(std::string * adjustmentId, ColorAdjustmentVa
 	{
 		adjust["id"] = *adjustmentId;
 	}
-	
+
 	if (redAdjustment != nullptr)
 	{
 		Json::Value & v = adjust["redAdjust"];
