@@ -110,7 +110,7 @@ int main(int argc, char * argv[])
 		bool colorModding = colorTransform || colorAdjust || argCorrection.isSet() || argTemperature.isSet();
 
 		// check that exactly one command was given
-        int commandCount = count({argColor.isSet(), argImage.isSet(), argEffect.isSet(), argServerInfo.isSet(), argClear.isSet(), argClearAll.isSet(), colorModding});
+        int commandCount = count({argColor.isSet(), argImage.isSet(), argEffect.isSet(), argServerInfo.isSet(), argPower.isSet(), argClear.isSet(), argClearAll.isSet(), colorModding});
 		if (commandCount != 1)
 		{
 			std::cerr << (commandCount == 0 ? "No command found." : "Multiple commands found.") << " Provide exactly one of the following options:" << std::endl;
