@@ -49,7 +49,7 @@ JsonClientConnection::~JsonClientConnection()
 void JsonClientConnection::readData()
 {
 	_receiveBuffer += _socket->readAll();
-	
+
 	if (_webSocketHandshakeDone)
 	{
 		// websocket mode, data frame
@@ -60,7 +60,7 @@ void JsonClientConnection::readData()
 		if(_receiveBuffer.contains("Upgrade: websocket"))
 		{
 			doWebSocketHandshake();
-		} else 
+		} else
 		{
 			// raw socket data, handling as usual
 			int bytes = _receiveBuffer.indexOf('\n') + 1;
@@ -77,7 +77,7 @@ void JsonClientConnection::readData()
 
 				// try too look up '\n' again
 				bytes = _receiveBuffer.indexOf('\n') + 1;
-			}		
+			}
 		}
 	}
 }
@@ -92,7 +92,7 @@ void JsonClientConnection::handleWebSocketFrame()
 		bool isMasked = (_receiveBuffer.at(1) & 0x80) == 0x80;
 		quint64 payloadLength = _receiveBuffer.at(1) & 0x7F;
 		quint32 index = 2;
-		
+
 		switch (payloadLength)
 		{
 			case 126:
@@ -109,18 +109,18 @@ void JsonClientConnection::handleWebSocketFrame()
 			default:
 				break;
 		}
-		
+
 		if (isMasked)
 		{
 			// if the data is masked we need to get the key for unmasking
 			maskKey = new quint8[4];
 			for (uint i=0; i < 4; i++)
 			{
-				maskKey[i] = _receiveBuffer.at(index + i);	
+				maskKey[i] = _receiveBuffer.at(index + i);
 			}
 			index += 4;
 		}
-		
+
 		// check the type of data frame
 		switch (opCode)
 		{
@@ -129,7 +129,7 @@ void JsonClientConnection::handleWebSocketFrame()
 				// frame contains text, extract it
 				QByteArray result = _receiveBuffer.mid(index, payloadLength);
 				_receiveBuffer.clear();
-			
+
 				// unmask data if necessary
 				if (isMasked)
 				{
@@ -143,14 +143,14 @@ void JsonClientConnection::handleWebSocketFrame()
 						maskKey = NULL;
 					}
 				}
-								
+
 				handleMessage(QString(result).toStdString());
 			}
 			break;
 		case 0x08:
 			{
 				// close request, confirm
-				quint8 close[] = {0x88, 0};				
+				quint8 close[] = {0x88, 0};
 				_socket->write((const char*)close, 2);
 				_socket->flush();
 				_socket->close();
@@ -159,7 +159,7 @@ void JsonClientConnection::handleWebSocketFrame()
 		case 0x09:
 			{
 				// ping received, send pong
-				quint8 pong[] = {0x0A, 0};				
+				quint8 pong[] = {0x0A, 0};
 				_socket->write((const char*)pong, 2);
 				_socket->flush();
 			}
@@ -168,7 +168,7 @@ void JsonClientConnection::handleWebSocketFrame()
 	} else
 	{
 		std::cout << "JSONCLIENT INFO: Someone is sending very big messages over several frames... it's not supported yet" << std::endl;
-		quint8 close[] = {0x88, 0};				
+		quint8 close[] = {0x88, 0};
 		_socket->write((const char*)close, 2);
 		_socket->flush();
 		_socket->close();
@@ -195,7 +195,7 @@ void JsonClientConnection::doWebSocketHandshake()
 	std::ostringstream h;
 	h << "HTTP/1.1 101 Switching Protocols\r\n" <<
 	"Upgrade: websocket\r\n" <<
-	"Connection: Upgrade\r\n" << 
+	"Connection: Upgrade\r\n" <<
 	"Sec-WebSocket-Accept: " << QString(hash.toBase64()).toStdString() << "\r\n\r\n";
 
 	_socket->write(h.str().c_str());
@@ -235,7 +235,7 @@ void JsonClientConnection::handleMessage(const std::string &messageString)
 		sendErrorReply("Error while validating json: " + errors);
 		return;
 	}
-	
+
 	// switch over all possible commands and handle them
 	if (command == "color")
 		handleColorCommand(message);
@@ -257,6 +257,8 @@ void JsonClientConnection::handleMessage(const std::string &messageString)
 		handleTemperatureCommand(message);
 	else if (command == "adjustment")
 		handleAdjustmentCommand(message);
+	else if (command == "power")
+		handlePowerCommand(message);
 	else
 		handleNotImplemented();
 }
@@ -380,7 +382,7 @@ void JsonClientConnection::handleServerInfoCommand(const Json::Value &)
 	Json::Value result;
 	result["success"] = true;
 	Json::Value & info = result["info"];
-	
+
 	// add host name for remote clients
 	info["hostname"] = QHostInfo::localHostName().toStdString();
 
@@ -397,7 +399,7 @@ void JsonClientConnection::handleServerInfoCommand(const Json::Value &)
 			item["duration_ms"] = Json::Value::UInt(priorityInfo.timeoutTime_ms - now);
 		}
 	}
-	
+
 	// collect correction information
 	Json::Value & correctionArray = info["correction"];
 	for (const std::string& correctionId : _hyperion->getCorrectionIds())
@@ -411,13 +413,13 @@ void JsonClientConnection::handleServerInfoCommand(const Json::Value &)
 
 		Json::Value & correction = correctionArray.append(Json::Value());
 		correction["id"] = correctionId;
-		
+
 		Json::Value & corrValues = correction["correctionValues"];
 		corrValues.append(colorCorrection->_rgbCorrection.getcorrectionR());
 		corrValues.append(colorCorrection->_rgbCorrection.getcorrectionG());
 		corrValues.append(colorCorrection->_rgbCorrection.getcorrectionB());
 	}
-	
+
 	// collect temperature correction information
 	Json::Value & temperatureArray = info["temperature"];
 	for (const std::string& tempId : _hyperion->getTemperatureIds())
@@ -431,7 +433,7 @@ void JsonClientConnection::handleServerInfoCommand(const Json::Value &)
 
 		Json::Value & temperature = temperatureArray.append(Json::Value());
 		temperature["id"] = tempId;
-		
+
 		Json::Value & tempValues = temperature["correctionValues"];
 		tempValues.append(colorTemp->_rgbCorrection.getcorrectionR());
 		tempValues.append(colorTemp->_rgbCorrection.getcorrectionG());
@@ -476,7 +478,7 @@ void JsonClientConnection::handleServerInfoCommand(const Json::Value &)
 		whitelevel.append(colorTransform->_rgbGreenTransform.getWhitelevel());
 		whitelevel.append(colorTransform->_rgbBlueTransform.getWhitelevel());
 	}
-	
+
 	// collect adjustment information
 	Json::Value & adjustmentArray = info["adjustment"];
 	for (const std::string& adjustmentId : _hyperion->getAdjustmentIds())
@@ -517,7 +519,7 @@ void JsonClientConnection::handleServerInfoCommand(const Json::Value &)
 
 		effects.append(effect);
 	}
-	
+
 	// collect active effect info
 	Json::Value & activeEffects = info["activeEffects"] = Json::Value(Json::arrayValue);
 	const std::list<ActiveEffectDefinition> & activeEffectsDefinitions = _hyperion->getActiveEffects();
@@ -531,11 +533,11 @@ void JsonClientConnection::handleServerInfoCommand(const Json::Value &)
 
 		activeEffects.append(activeEffect);
 	}
-	
+
 	////////////////////////////////////
 	// collect active static led color//
 	////////////////////////////////////
-	
+
 	// create New JSON Array Value "activeLEDColor"
 	Json::Value & activeLedColors = info["activeLedColor"] = Json::Value(Json::arrayValue);
 	// get current Priority from Hyperion Muxer
@@ -564,7 +566,7 @@ void JsonClientConnection::handleServerInfoCommand(const Json::Value &)
 
 			uint16_t Hue;
 			float Saturation, Luminace;
-		    
+
 			// add HSL Value to Array
 			HslTransform::rgb2hsl(priorityInfo.ledColors.begin()->red,
 					priorityInfo.ledColors.begin()->green,
@@ -586,7 +588,7 @@ void JsonClientConnection::handleServerInfoCommand(const Json::Value &)
 				<< std::hex << unsigned(priorityInfo.ledColors.begin()->blue);
 
 			LEDcolor["HEX Value"].append(hex.str());
-		    
+
 			activeLedColors.append(LEDcolor);
 			}
 		}
@@ -640,7 +642,7 @@ void JsonClientConnection::handleTransformCommand(const Json::Value &message)
 		//sendErrorReply(std::string("Incorrect transform identifier: ") + transformId);
 		return;
 	}
-		
+
 	if (transform.isMember("saturationGain"))
 	{
 		colorTransform->_hsvTransform.setSaturationGain(transform["saturationGain"].asDouble());
@@ -650,7 +652,7 @@ void JsonClientConnection::handleTransformCommand(const Json::Value &message)
 	{
 		colorTransform->_hsvTransform.setValueGain(transform["valueGain"].asDouble());
 	}
-	
+
 	if (transform.isMember("saturationLGain"))
 	{
 		colorTransform->_hslTransform.setSaturationGain(transform["saturationLGain"].asDouble());
@@ -697,7 +699,7 @@ void JsonClientConnection::handleTransformCommand(const Json::Value &message)
 		colorTransform->_rgbGreenTransform.setWhitelevel(values[1u].asDouble());
 		colorTransform->_rgbBlueTransform .setWhitelevel(values[2u].asDouble());
 	}
-	
+
 	// commit the changes
 	_hyperion->transformsUpdated();
 
@@ -723,13 +725,13 @@ void JsonClientConnection::handleCorrectionCommand(const Json::Value &message)
 		colorCorrection->_rgbCorrection.setcorrectionG(values[1u].asInt());
 		colorCorrection->_rgbCorrection.setcorrectionB(values[2u].asInt());
 	}
-	
+
 	// commit the changes
 	_hyperion->correctionsUpdated();
 
 	sendSuccessReply();
 }
-	
+
 void JsonClientConnection::handleTemperatureCommand(const Json::Value &message)
 {
 	const Json::Value & temperature = message["temperature"];
@@ -749,7 +751,7 @@ void JsonClientConnection::handleTemperatureCommand(const Json::Value &message)
 		colorTemperature->_rgbCorrection.setcorrectionG(values[1u].asInt());
 		colorTemperature->_rgbCorrection.setcorrectionB(values[2u].asInt());
 	}
-	
+
 	// commit the changes
 	_hyperion->temperaturesUpdated();
 
@@ -767,7 +769,7 @@ void JsonClientConnection::handleAdjustmentCommand(const Json::Value &message)
 		//sendErrorReply(std::string("Incorrect transform identifier: ") + transformId);
 		return;
 	}
-		
+
 	if (adjustment.isMember("redAdjust"))
 	{
 		const Json::Value & values = adjustment["redAdjust"];
@@ -790,13 +792,27 @@ void JsonClientConnection::handleAdjustmentCommand(const Json::Value &message)
 		colorAdjustment->_rgbBlueAdjustment.setadjustmentR(values[0u].asInt());
 		colorAdjustment->_rgbBlueAdjustment.setadjustmentG(values[1u].asInt());
 		colorAdjustment->_rgbBlueAdjustment.setadjustmentB(values[2u].asInt());
-	}	
+	}
 	// commit the changes
 	_hyperion->adjustmentsUpdated();
 
 	sendSuccessReply();
 }
-	
+
+void JsonClientConnection::handlePowerCommand(const Json::Value &message)
+{
+	forwardJsonMessage(message);
+
+	// extract parameters
+	bool power = message["power"].asBool();
+
+	// set power
+	_hyperion->setPower(power);
+
+	// send reply
+	sendSuccessReply();
+}
+
 void JsonClientConnection::handleNotImplemented()
 {
 	sendErrorReply("Command not implemented");
@@ -806,7 +822,7 @@ void JsonClientConnection::sendMessage(const Json::Value &message)
 {
 	Json::FastWriter writer;
 	std::string serializedReply = writer.write(message);
-	
+
 	if (!_webSocketHandshakeDone)
 	{
 		// raw tcp socket mode
@@ -815,7 +831,7 @@ void JsonClientConnection::sendMessage(const Json::Value &message)
 	{
 		// websocket mode
 		quint32 size = serializedReply.length();
-	
+
 		// prepare data frame
 		QByteArray response;
 		response.append(0x81);
@@ -827,9 +843,9 @@ void JsonClientConnection::sendMessage(const Json::Value &message)
 		} else {
 			response.append(size);
 		}
-	
+
 		response.append(serializedReply.c_str(), serializedReply.length());
-	
+
 		_socket->write(response.data(), response.length());
 	}
 }

@@ -481,7 +481,7 @@ RgbChannelCorrection* Hyperion::createRgbChannelCorrection(const Json::Value& co
 RgbChannelAdjustment* Hyperion::createRgbChannelAdjustment(const Json::Value& colorConfig, const RgbChannel color)
 {
 	int varR=0, varG=0, varB=0;
-	if (color == RED) 
+	if (color == RED)
 	{
 		varR = colorConfig.get("redChannel", 255).asInt();
 		varG = colorConfig.get("greenChannel", 0).asInt();
@@ -492,7 +492,7 @@ RgbChannelAdjustment* Hyperion::createRgbChannelAdjustment(const Json::Value& co
 		varR = colorConfig.get("redChannel", 0).asInt();
 		varG = colorConfig.get("greenChannel", 255).asInt();
 		varB = colorConfig.get("blueChannel", 0).asInt();
-	}		
+	}
 	else if (color == BLUE)
 	{
 		varR = colorConfig.get("redChannel", 0).asInt();
@@ -655,6 +655,9 @@ Hyperion::Hyperion(const Json::Value &jsonConfig, const std::string configFile) 
 	// initialize the color smoothing filter
 	_device = createColorSmoothing(jsonConfig["color"]["smoothing"], _device);
 
+	// Switch on
+	_power = true;
+
 	// setup the timer
 	_timer.setSingleShot(true);
 	QObject::connect(&_timer, SIGNAL(timeout()), this, SLOT(update()));
@@ -671,6 +674,7 @@ Hyperion::~Hyperion()
 {
 	// switch off all leds
 	clearall();
+	_power = false;
 	_device->switchOff();
 
 	// delete the effect engine
@@ -681,18 +685,24 @@ Hyperion::~Hyperion()
 
 	// delete the color transform
 	delete _raw2ledTransform;
-	
+
 	// delete the color correction
 	delete _raw2ledCorrection;
 
 	// delete the color temperature correction
 	delete _raw2ledTemperature;
-	
+
 	// delete the color adjustment
 	delete _raw2ledAdjustment;
 
 	// delete the message forwarder
 	delete _messageForwarder;
+}
+
+void Hyperion::setPower(bool power)
+{
+	_power = power;
+	update();
 }
 
 unsigned Hyperion::getLedCount() const
@@ -862,54 +872,58 @@ void Hyperion::update()
 	// Update the muxer, cleaning obsolete priorities
 	_muxer.setCurrentTime(QDateTime::currentMSecsSinceEpoch());
 
-	// Obtain the current priority channel
-	int priority = _muxer.getCurrentPriority();
-	const PriorityMuxer::InputInfo & priorityInfo  = _muxer.getInputInfo(priority);
-
-	// Apply the correction and the transform to each led and color-channel
-	// Avoid applying correction, the same task is performed by adjustment
-	// std::vector<ColorRgb> correctedColors = _raw2ledCorrection->applyCorrection(priorityInfo.ledColors);
-	std::vector<ColorRgb> transformColors =_raw2ledTransform->applyTransform(priorityInfo.ledColors);
-	std::vector<ColorRgb> adjustedColors = _raw2ledAdjustment->applyAdjustment(transformColors);
-	std::vector<ColorRgb> ledColors = _raw2ledTemperature->applyCorrection(adjustedColors);
-	const std::vector<Led>& leds = _ledString.leds();
-	int i = 0;
-	for (ColorRgb& color : ledColors)
+	// Check if we are powered on
+	if (_power)
 	{
-		const ColorOrder ledColorOrder = leds.at(i).colorOrder;
-		// correct the color byte order
-		switch (ledColorOrder)
-		{
-		case ORDER_RGB:
-			// leave as it is
-			break;
-		case ORDER_BGR:
-			std::swap(color.red, color.blue);
-			break;
-		case ORDER_RBG:
-			std::swap(color.green, color.blue);
-			break;
-		case ORDER_GRB:
-			std::swap(color.red, color.green);
-			break;
-		case ORDER_GBR:
-		{
-			std::swap(color.red, color.green);
-			std::swap(color.green, color.blue);
-			break;
-		}
-		case ORDER_BRG:
-		{
-			std::swap(color.red, color.blue);
-			std::swap(color.green, color.blue);
-			break;
-		}
-		}
-		i++;
-	}
+		// Obtain the current priority channel
+		int priority = _muxer.getCurrentPriority();
+		const PriorityMuxer::InputInfo & priorityInfo  = _muxer.getInputInfo(priority);
 
-	// Write the data to the device
-	_device->write(ledColors);
+		// Apply the correction and the transform to each led and color-channel
+		// Avoid applying correction, the same task is performed by adjustment
+		// std::vector<ColorRgb> correctedColors = _raw2ledCorrection->applyCorrection(priorityInfo.ledColors);
+		std::vector<ColorRgb> transformColors =_raw2ledTransform->applyTransform(priorityInfo.ledColors);
+		std::vector<ColorRgb> adjustedColors = _raw2ledAdjustment->applyAdjustment(transformColors);
+		std::vector<ColorRgb> ledColors = _raw2ledTemperature->applyCorrection(adjustedColors);
+		const std::vector<Led>& leds = _ledString.leds();
+		int i = 0;
+		for (ColorRgb& color : ledColors)
+		{
+			const ColorOrder ledColorOrder = leds.at(i).colorOrder;
+			// correct the color byte order
+			switch (ledColorOrder)
+			{
+			case ORDER_RGB:
+				// leave as it is
+				break;
+			case ORDER_BGR:
+				std::swap(color.red, color.blue);
+				break;
+			case ORDER_RBG:
+				std::swap(color.green, color.blue);
+				break;
+			case ORDER_GRB:
+				std::swap(color.red, color.green);
+				break;
+			case ORDER_GBR:
+			{
+				std::swap(color.red, color.green);
+				std::swap(color.green, color.blue);
+				break;
+			}
+			case ORDER_BRG:
+			{
+				std::swap(color.red, color.blue);
+				std::swap(color.green, color.blue);
+				break;
+			}
+			}
+			i++;
+		}
+
+		// Write the data to the device
+		_device->write(ledColors);
+	}
 
 	// Start the timeout-timer
 	if (priorityInfo.timeoutTime_ms == -1)
