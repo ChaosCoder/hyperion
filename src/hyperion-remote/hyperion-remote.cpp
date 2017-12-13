@@ -64,7 +64,7 @@ int main(int argc, char * argv[])
         	StringParameter    & argEffect     = parameters.add<StringParameter>   ('e', "effect"    , "Enable the effect with the given name");
 		StringParameter    & argEffectArgs = parameters.add<StringParameter>   (0x0, "effectArgs", "Arguments to use in combination with the specified effect. Should be a Json object string.");
 		SwitchParameter<>  & argServerInfo = parameters.add<SwitchParameter<> >('l', "list"      , "List server info and active effects with priority and duration");
-		BoolParameter      & argPower	     = parameters.add<BoolParameter>      ('o', "on"  , "Power hyperion on or off");
+		IntParameter       & argPower	     = parameters.add<IntParameter>      (0x0, "power"     , "Power hyperion on or off");
 		SwitchParameter<>  & argClear      = parameters.add<SwitchParameter<> >('x', "clear"     , "Clear data for the priority channel provided by the -p option");
 		SwitchParameter<>  & argClearAll   = parameters.add<SwitchParameter<> >(0x0, "clearall"  , "Clear data for all active priority channels");
 		StringParameter    & argId         = parameters.add<StringParameter>   ('q', "qualifier" , "Identifier(qualifier) of the transform to set");
@@ -166,7 +166,7 @@ int main(int argc, char * argv[])
 		}
 		else if (argPower.isSet())
 		{
-			connection.setPower(argPower.getValue());
+			connection.setPower((bool)argPower.getValue());
 		}
 		else if (argClear.isSet())
 		{
