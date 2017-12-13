@@ -702,6 +702,8 @@ Hyperion::~Hyperion()
 void Hyperion::setPower(bool power)
 {
 	_power = power;
+	if(!power)
+		_device->switchOff();
 	update();
 }
 
